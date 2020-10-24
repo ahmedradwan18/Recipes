@@ -2,10 +2,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 <item
-    android:title="Search"
-    android:icon="@drawable/ic_baseline_search_24"
-    android:id="@+id/menu_search"
+    android:title="Favorite List"
+    android:icon="@drawable/ic_baseline_favorite_24"
+    android:id="@+id/menu_favorite"
     app:showAsAction="always|collapseActionView"
-    app:actionViewClass="android.widget.SearchView"
     />
 </menu>

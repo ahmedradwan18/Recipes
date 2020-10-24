@@ -24,14 +24,13 @@ import kotlinx.android.synthetic.main.receipe_item.view.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-class RecipeAdapter(
+class FavRecipeAdapter(
     private val context: Context,
-    private var RecipesList: MutableList<RecipePojoItem>
+    private var RecipesList: List<RecipeFavorite>
 
 ) :
-    RecyclerView.Adapter<RecipeAdapter.RecipeViewHolder>() {
+    RecyclerView.Adapter<FavRecipeAdapter.RecipeViewHolder>() {
 
-    //private lateinit var job: Job
     private lateinit var db: RecipeDataBase
 
 
@@ -42,7 +41,6 @@ class RecipeAdapter(
         )
         db = Room.databaseBuilder(context, RecipeDataBase::class.java, "RecipeDatabase").build()
 
-        //job= Job()
         return RecipeViewHolder(
             itemView
         )
@@ -78,55 +76,15 @@ class RecipeAdapter(
             .load(currentRecipe.image)
             .into(holder.recipeImage)
 
-        holder.favoriteImage.setOnClickListener {
-            holder.favoriteImage.setImageResource(R.drawable.ic_baseline_favorite_24)
-
-            val recipe = RecipeFavorite(
-                currentRecipe.name,
-                currentRecipe.calories,
-                currentRecipe.difficulty,
-                currentRecipe.headline,
-                currentRecipe.image
-            )
-
-            saveRecipe(recipe)
-
-
-        }
-
-
-
 
         holder.itemView.setOnClickListener {
-            val intent = Intent(context, Details::class.java)
-            intent.putExtra("thumb", currentRecipe.thumb)
-            intent.putExtra("name", currentRecipe.name)
-            intent.putExtra("description", currentRecipe.description)
-            intent.putExtra("calories", currentRecipe.calories)
-            intent.putExtra("carbos", currentRecipe.carbos)
-            intent.putExtra("fats", currentRecipe.fats)
-            intent.putExtra("proteins", currentRecipe.proteins)
-            intent.putExtra("time", currentRecipe.time)
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent)
+           Toast.makeText(context,"You Clicked "+currentRecipe.name,Toast.LENGTH_SHORT).show()
         }
+
+
+        holder.favoriteImage.visibility=View.INVISIBLE
     }
 
-    private fun saveRecipe(recipe: RecipeFavorite) {
-        class SaveRecipe : AsyncTask<Void, Void, Void>() {
-            override fun doInBackground(vararg p0: Void?): Void? {
-                RecipeDataBase(context!!).getRecipeDao().addRecipe(recipe)
-                return null
-            }
-
-            override fun onPostExecute(result: Void?) {
-                super.onPostExecute(result)
-                Toast.makeText(context, "Recipe Saved", Toast.LENGTH_LONG).show()
-            }
-
-        }
-        SaveRecipe().execute()
-    }
 
     override fun getItemCount() = RecipesList.size
 
@@ -138,10 +96,6 @@ class RecipeAdapter(
         val calories: TextView = itemView.recipe_calories
         val recipeDifficulty: TextView = itemView.recipe_difficulty
 
+
     }
-
-
-
 }
-
-

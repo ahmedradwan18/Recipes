@@ -7,6 +7,6 @@ import retrofit2.http.GET
 interface RecipeApiInterface {
 
     @GET("android-test/recipes.json")
-    fun getRecipes(): Call<List<RecipePojoItem>>
+    fun getRecipes(): Call<MutableList<RecipePojoItem>>
 
 }
