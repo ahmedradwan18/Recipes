@@ -2,7 +2,6 @@ package com.example.yackeensolutionstask.UI
 
 import android.animation.ObjectAnimator
 import android.content.Intent
-import android.os.AsyncTask
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -20,7 +19,10 @@ import com.example.yackeensolutionstask.R
 import com.example.yackeensolutionstask.Room.RecipeDataBase
 import com.example.yackeensolutionstask.Room.RecipeFavorite
 import kotlinx.android.synthetic.main.home.*
-import kotlinx.android.synthetic.main.receipe_item.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -48,11 +50,14 @@ class Home : AppCompatActivity() {
 
         db = Room.databaseBuilder(applicationContext, RecipeDataBase::class.java, "RecipeDatabase")
             .build()
+        favList = ArrayList()
 
         fab_btn.visibility = View.INVISIBLE
+
         fab_btn.setOnClickListener {
             recipesList.clear()
             receipes_Recycler?.adapter?.notifyDataSetChanged()
+
             displayRecipes()
 
         }
@@ -71,22 +76,29 @@ class Home : AppCompatActivity() {
         // build retrofit and fetch data
         buildRetrofit()
 
-    }
 
-    fun buildRetrofit() {
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://hf-android-app.s3-eu-west-1.amazonaws.com/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        val apiInterface: RecipeApiInterface = retrofit.create(
-            RecipeApiInterface::class.java
-        )
-        val call: Call<MutableList<RecipePojoItem>> = apiInterface.getRecipes()
-        fetchData(call)
     }
 
 
+    private fun displayRecipes() {
 
+        GlobalScope.launch (Dispatchers.IO){
+            favList = RecipeDataBase(this@Home).getRecipeDao().getAllRecipes()
+
+        withContext(Dispatchers.Main){
+            favAdapter =
+                FavRecipeAdapter(
+                    applicationContext, favList
+                )
+            receipes_Recycler.adapter = favAdapter
+            progressBar.setVisibility(View.INVISIBLE)
+        }
+
+        }
+
+
+
+    }
     override fun onResume() {
         super.onResume()
         networkMonitor.register()
@@ -119,51 +131,44 @@ class Home : AppCompatActivity() {
     }
 
     private fun fetchData(call: Call<MutableList<RecipePojoItem>>) {
-        call.enqueue(object : Callback<MutableList<RecipePojoItem>> {
-            override fun onResponse(
-                call: Call<MutableList<RecipePojoItem>>,
-                response: Response<MutableList<RecipePojoItem>>
-            ) {
-                recipesList = response.body()!!
+        GlobalScope.launch (Dispatchers.IO) {
 
-                adapter =
-                    RecipeAdapter(
-                        applicationContext,
-                        recipesList
-                    )
-                receipes_Recycler.adapter = adapter
-                progressBar.setVisibility(View.INVISIBLE)
-                fab_btn.visibility = View.VISIBLE
+            call.enqueue(object : Callback<MutableList<RecipePojoItem>> {
+                override fun onResponse(
+                    call: Call<MutableList<RecipePojoItem>>,
+                    response: Response<MutableList<RecipePojoItem>>
+                ) {
+                    recipesList = response.body()!!
 
-            }
+                    adapter =
+                        RecipeAdapter(
+                            applicationContext,
+                            recipesList
+                        )
+                    receipes_Recycler.adapter = adapter
+                    progressBar.setVisibility(View.INVISIBLE)
+                    fab_btn.visibility = View.VISIBLE
 
-            override fun onFailure(call: Call<MutableList<RecipePojoItem>>, t: Throwable) {
-                Toast.makeText(applicationContext, t.message, Toast.LENGTH_LONG).show()
+                }
 
-            }
-        })
-    }
+                override fun onFailure(call: Call<MutableList<RecipePojoItem>>, t: Throwable) {
+                    Toast.makeText(applicationContext, t.message, Toast.LENGTH_LONG).show()
 
-    private fun displayRecipes() {
-        class SaveRecipe : AsyncTask<Void, Void, Void>() {
-            override fun doInBackground(vararg p0: Void?): Void? {
-                favList = RecipeDataBase(this@Home!!).getRecipeDao().getAllRecipes()
-                return null
-            }
-
-            override fun onPostExecute(result: Void?) {
-                super.onPostExecute(result)
-                favAdapter =
-                    FavRecipeAdapter(
-                        applicationContext, favList
-
-                    )
-                receipes_Recycler.adapter = favAdapter
-                progressBar.setVisibility(View.INVISIBLE)
-
-            }
+                }
+            })
 
         }
-        SaveRecipe().execute()
+
+    }
+    fun buildRetrofit() {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://hf-android-app.s3-eu-west-1.amazonaws.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        val apiInterface: RecipeApiInterface = retrofit.create(
+            RecipeApiInterface::class.java
+        )
+        val call: Call<MutableList<RecipePojoItem>> = apiInterface.getRecipes()
+        fetchData(call)
     }
 }

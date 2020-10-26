@@ -89,8 +89,10 @@ class RecipeAdapter(
                 currentRecipe.image
             )
 
-            saveRecipe(recipe)
-
+            GlobalScope.launch {
+                RecipeDataBase(context!!).getRecipeDao().addRecipe(recipe)
+            }
+            Toast.makeText(context, "Recipe Saved", Toast.LENGTH_LONG).show()
 
         }
 
@@ -112,21 +114,7 @@ class RecipeAdapter(
         }
     }
 
-    private fun saveRecipe(recipe: RecipeFavorite) {
-        class SaveRecipe : AsyncTask<Void, Void, Void>() {
-            override fun doInBackground(vararg p0: Void?): Void? {
-                RecipeDataBase(context!!).getRecipeDao().addRecipe(recipe)
-                return null
-            }
 
-            override fun onPostExecute(result: Void?) {
-                super.onPostExecute(result)
-                Toast.makeText(context, "Recipe Saved", Toast.LENGTH_LONG).show()
-            }
-
-        }
-        SaveRecipe().execute()
-    }
 
     override fun getItemCount() = RecipesList.size
 
